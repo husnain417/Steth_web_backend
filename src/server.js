@@ -72,6 +72,10 @@ app.get("/", (req, res) => {
   res.send("Backend is working!");
 });
 
+app.get('/ping', (req, res) => {
+  res.send('pong');
+});
+
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
