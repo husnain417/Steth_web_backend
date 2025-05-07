@@ -68,6 +68,11 @@ app.use((err, req, res, next) => {
     });
 });
 
+app.get("/", (req, res) => {
+  res.send("Backend is working!");
+});
+
+
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
