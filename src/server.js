@@ -14,6 +14,8 @@ const studentVerificationRoutes = require('./routes/studentVerification.routes')
 const orderRoutes = require('./routes/order.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const contactRoutes = require('./routes/contact.routes');
+const heroImageRoutes = require('./routes/heroImageRoutes');
+const colorTileRoutes = require('./routes/colorTileRoutes');
 
 const app = express();
 
@@ -23,6 +25,10 @@ const ensureDirectoryExists = (directory) => {
     fs.mkdirSync(directory, { recursive: true });
   }
 };
+
+// Ensure uploads directory exists
+ensureDirectoryExists(path.join(__dirname, 'uploads'));
+
 // Middleware
 app.use(express.json());
 app.use(cors());  // Allow all origins during development
@@ -31,7 +37,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "img-src": ["'self'", "data:", "http://localhost:5000", "http://localhost:3000"]
+      "img-src": ["'self'", "data:", "http://localhost:5000", "http://localhost:3000", "res.cloudinary.com"]
     }
   },
   crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -39,7 +45,6 @@ app.use(helmet({
 
 app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 
 // Serve static files from uploads directory
 
@@ -57,7 +62,8 @@ app.use('/api/student-verification', studentVerificationRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/contact', contactRoutes);
-
+app.use('/api/hero-images', heroImageRoutes);
+app.use('/api/color-tiles', colorTileRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
