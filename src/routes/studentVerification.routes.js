@@ -14,7 +14,7 @@ router.get('/status', auth, studentVerificationController.checkVerificationStatu
 
 // Admin routes for managing verification requests
 router.get('/pending', studentVerificationController.getPendingVerifications);
-router.post('/:verificationId/approve', auth, isAdmin, studentVerificationController.approveVerification);
-router.post('/:verificationId/reject', auth, isAdmin, studentVerificationController.rejectVerification);
+router.post('/:verificationId/approve', studentVerificationController.approveVerification);
+router.post('/:verificationId/reject', studentVerificationController.rejectVerification);
 
 module.exports = router;
