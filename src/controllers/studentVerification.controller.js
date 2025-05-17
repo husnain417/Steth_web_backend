@@ -175,7 +175,6 @@ exports.approveVerification = async (req, res) => {
     // Update verification status
     verification.status = 'Approved';
     verification.verifiedAt = new Date();
-    verification.verifiedBy = req.user._id;
     await verification.save();
 
     // Update user as verified student
@@ -232,7 +231,6 @@ exports.rejectVerification = async (req, res) => {
     verification.status = 'Rejected';
     verification.rejectionReason = rejectionReason || 'No reason provided';
     verification.verifiedAt = new Date();
-    verification.verifiedBy = req.user._id;
     await verification.save();
 
     // Send rejection email to student
