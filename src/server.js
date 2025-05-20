@@ -16,6 +16,7 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const contactRoutes = require('./routes/contact.routes');
 const heroImageRoutes = require('./routes/heroImageRoutes');
 const colorTileRoutes = require('./routes/colorTileRoutes');
+const subscriberRoutes = require('./routes/subscriberRoutes');
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/hero-images', heroImageRoutes);
 app.use('/api/color-tiles', colorTileRoutes);
+app.use('/api/subscribers', subscriberRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);

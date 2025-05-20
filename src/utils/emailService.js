@@ -386,3 +386,63 @@ exports.sendOtp = async (user) => {
       throw error; // Re-throw to handle in the controller
     }
   };
+
+// Welcome email with image for new subscribers
+exports.sendWelcomeEmail = async (email) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_STETH,
+      to: email,
+      subject: 'Welcome to Our Newsletter!',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Welcome to Our Newsletter!</h2>
+          <p>Thank you for subscribing to our newsletter. We're excited to have you join our community!</p>
+          <img src="cid:welcome-image" alt="Welcome" style="max-width: 100%; height: auto; margin: 20px 0;">
+          <p>You'll be the first to know about our latest updates, news, and special offers.</p>
+          <p>Best regards,<br>The Steth Team</p>
+        </div>
+      `,
+      attachments: [{
+        filename: 'welcome.jpeg',
+        path: 'src/images/welcome.jpeg',
+        cid: 'welcome-image' // Content ID for referencing in HTML
+      }]
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Welcome email sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    throw error;
+  }
+};
+
+// Send bulk email to all subscribers
+exports.sendBulkEmail = async (subscribers, subject, message) => {
+  try {
+    const emailPromises = subscribers.map(subscriber => {
+      const mailOptions = {
+        from: process.env.EMAIL_STETH,
+        to: subscriber.email,
+        subject: subject,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">${subject}</h2>
+            <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #333;">
+              ${message.replace(/\n/g, '<br>')}
+            </div>
+            <p style="margin-top: 20px;">Best regards,<br>The Steth Team</p>
+          </div>
+        `
+      };
+      return transporter.sendMail(mailOptions);
+    });
+
+    await Promise.all(emailPromises);
+    console.log(`Bulk email sent to ${subscribers.length} subscribers`);
+  } catch (error) {
+    console.error('Error sending bulk email:', error);
+    throw error;
+  }
+};
