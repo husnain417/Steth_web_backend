@@ -81,7 +81,7 @@ exports.sendNewOrderEmailToAdmin = async (order, userEmail) => {
           <td>${item.size || 'N/A'}</td>
           <td>${item.quantity}</td>
           <td>PKR ${item.price.toFixed(2)}</td>
-          <td>PKR ${(item.price * item.quantity).toFixed(2)}</td>
+          <td>PKR ${order.total.toFixed(2)}</td>
         </tr>
       `).join('');
   
@@ -147,7 +147,7 @@ exports.sendNewOrderEmailToAdmin = async (order, userEmail) => {
           <td>${item.size || 'N/A'}</td>
           <td>${item.quantity}</td>
           <td>PKR ${item.price.toFixed(2)}</td>
-          <td>PKR ${(item.price * item.quantity).toFixed(2)}</td>
+          <td>PKR ${order.total.toFixed(2)}</td>
         </tr>
       `).join('');
   
@@ -181,7 +181,7 @@ exports.sendNewOrderEmailToAdmin = async (order, userEmail) => {
           <p><strong>Discount:</strong> PKR ${order.discount.toFixed(2)} ${order.discountCode ? `(${order.discountCode})` : ''}</p>
           <p><strong>Points Used:</strong> ${order.pointsUsed}</p>
           <p><strong>Points Earned:</strong> ${order.pointsEarned}</p>
-          <p><strong>Total:</strong> PKR ${order.total.toFixed(2)}</p>
+          <p><strong>Discounted Total:</strong> PKR ${order.total.toFixed(2)}</p>
           
           <h3>Shipping Address:</h3>
           <p>
