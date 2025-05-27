@@ -419,7 +419,7 @@ exports.sendWelcomeEmail = async (email) => {
 };
 
 // Send bulk email to all subscribers
-exports.sendBulkEmail = async (subscribers, subject, message) => {
+exports.sendBulkEmail = async (subscribers, subject, message, images = []) => {
   try {
     const emailPromises = subscribers.map(subscriber => {
       const mailOptions = {
@@ -429,18 +429,30 @@ exports.sendBulkEmail = async (subscribers, subject, message) => {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #333;">${subject}</h2>
-            <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #333;">
-              ${message.replace(/\n/g, '<br>')}
+            <p>${message.replace(/\n/g, '<br>')}</p>
+            ${images.map((image, index) => `
+              <img src="cid:image_${index}" alt="Image ${index + 1}" style="max-width: 100%; height: auto; margin: 20px 0;">
+            `).join('')}
+            <p>Best regards,<br>The Steth Team</p>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+              <p style="color: #666; font-size: 12px;">
+                You're receiving this email because you subscribed to our newsletter.
+              </p>
             </div>
-            <p style="margin-top: 20px;">Best regards,<br>The Steth Team</p>
           </div>
-        `
+        `,
+        attachments: images.map((image, index) => ({
+          filename: image.originalname || `image_${index + 1}.jpg`,
+          content: image.buffer,
+          contentType: image.mimetype,
+          cid: `image_${index}`
+        }))
       };
       return transporter.sendMail(mailOptions);
     });
 
     await Promise.all(emailPromises);
-    console.log(`Bulk email sent to ${subscribers.length} subscribers`);
+    console.log(`Bulk email sent to ${subscribers.length} subscribers with ${images.length} images`);
   } catch (error) {
     console.error('Error sending bulk email:', error);
     throw error;

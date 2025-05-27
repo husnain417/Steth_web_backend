@@ -35,9 +35,11 @@ exports.addSubscriber = async (req, res) => {
 };
 
 // Send email to all subscribers
+// Send email to all subscribers
 exports.sendBulkEmail = async (req, res) => {
     try {
         const { subject, message } = req.body;
+        const images = req.files; // This will contain the uploaded images
 
         if (!subject || !message) {
             return res.status(400).json({ 
@@ -52,15 +54,16 @@ exports.sendBulkEmail = async (req, res) => {
             return res.status(404).json({ message: 'No subscribers found' });
         }
 
-        // Send email to all subscribers
-        await emailService.sendBulkEmail(subscribers, subject, message);
+        // Send email to all subscribers with images
+        await emailService.sendBulkEmail(subscribers, subject, message, images);
 
         res.status(200).json({ 
             message: 'Bulk email sent successfully',
-            recipientsCount: subscribers.length
+            recipientsCount: subscribers.length,
+            imagesCount: images ? images.length : 0
         });
     } catch (error) {
         console.error('Error sending bulk email:', error);
         res.status(500).json({ message: 'Error sending bulk email' });
     }
-}; 
+};

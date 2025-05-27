@@ -47,7 +47,7 @@ exports.getAllProducts = catchAsync(async (req, res) => {
     .sort(sort)
     .skip((page - 1) * limit)
     .limit(Number(limit))
-    .select('name price category gender defaultImages colorImages totalStock'); // Select only necessary fields for listing
+    .select('name price category gender defaultImages colorImages totalStock inventory'); // Select only necessary fields for listing
     
   // Get total count for pagination
   const total = await Product.countDocuments(filter);
