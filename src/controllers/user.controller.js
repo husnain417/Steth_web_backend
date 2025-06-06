@@ -128,7 +128,7 @@ const loginUser = async (req, res) => {
       email: user.email
     };
 
-    const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' });
+    const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
 
     res.status(200).json({ 
       message: 'Login successful', 
