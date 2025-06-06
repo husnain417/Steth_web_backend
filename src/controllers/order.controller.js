@@ -36,6 +36,7 @@ const orderController = {
           items,
           shippingAddress,
           subtotal,
+          shippingCharges = 0, // ADD THIS LINE - Extract shipping charges
           total,
           discount,
           discountCode = '',
@@ -44,7 +45,6 @@ const orderController = {
             reasons: [],
             pointsUsed: 0
           },
-          shippingCharges = 0, // Add shipping charges from frontend
           paymentMethod
         } = orderData;
         
@@ -114,27 +114,9 @@ const orderController = {
         
           await product.save();
         }
-        
-        // Validate and recalculate totals on backend
-        const calculatedSubtotal = processedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const totalDiscountAmount = (discountInfo.amount || 0) + pointsToUse;
-        const finalShippingCharges = calculatedSubtotal >= 5000 ? 0 : Number(shippingCharges);
-        const calculatedTotal = calculatedSubtotal - totalDiscountAmount + finalShippingCharges;
-        
-        // Validate that frontend calculations match backend
-        if (Math.abs(calculatedTotal - Number(total)) > 0.01) {
-          return res.status(400).json({
-            success: false,
-            message: 'Order total mismatch. Please refresh and try again.',
-            details: {
-              calculated: calculatedTotal,
-              received: Number(total)
-            }
-          });
-        }
             
         // Calculate points earned from this order (based on the final total price, not subtotal)
-        const pointsEarned = calculatePoints(calculatedTotal);
+        const pointsEarned = calculatePoints(total);
         
         // Determine if this is the first order (only if user is logged in)
         let isFirstOrder = false;
@@ -169,13 +151,13 @@ const orderController = {
         const finalOrderData = {
           items: processedItems,
           shippingAddress,
-          subtotal: calculatedSubtotal,
-          discount: totalDiscountAmount,
+          subtotal: Number(subtotal),
+          shippingCharges: Number(shippingCharges), // ADD THIS LINE - Include shipping charges
+          discount: Number(discount),
           discountCode: discountInfo.reasons
             ? discountInfo.reasons.join(', ')
             : '',
-          shippingCharges: finalShippingCharges,
-          total: calculatedTotal,
+          total: Number(total),
           pointsUsed: pointsToUse,
           pointsEarned,
           paymentMethod,

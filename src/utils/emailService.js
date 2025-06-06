@@ -188,7 +188,7 @@ exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
               </tr>
               ${order.discount > 0 ? `
                 <tr>
-                  <td style="text-align: right; padding: 5px 0; color: #28a745;">Discount ${order.discountCode ? `(${order.discountCode})` : ''}:</td>
+                  <td style="text-align: right; padding: 5px 0; color:hsl(134, 61.40%, 40.60%);">Discount ${order.discountCode ? `(${order.discountCode})` : ''}:</td>
                   <td style="text-align: right; padding: 5px 0; color: #28a745;">-PKR ${order.discount.toFixed(2)}</td>
                 </tr>
               ` : ''}
