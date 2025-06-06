@@ -130,7 +130,11 @@ const loginUser = async (req, res) => {
 
     const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2d' });
 
-    res.status(200).json({ message: 'Login successful', accessToken });
+    res.status(200).json({ 
+      message: 'Login successful', 
+      accessToken, 
+      role: user.role 
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: 'Server error' });
