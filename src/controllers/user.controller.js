@@ -128,7 +128,7 @@ const loginUser = async (req, res) => {
       email: user.email
     };
 
-    const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
+    const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2d' });
 
     res.status(200).json({ 
       message: 'Login successful', 
@@ -142,29 +142,21 @@ const loginUser = async (req, res) => {
 };
 
 const profileAccess = async (req, res) => {
-  // Hardcoded admin ID for testing
-  const id = "68421e1deca16ba302078926";
+  const { id } = req.user;
 
   try {
       const user = await User.findOne({ _id: id }).lean();
 
       if (!user) {
-          return res.status(404).json({ message: 'User not found' }); // Changed to 404
+          return res.status(400).json({ message: 'User not found' });
       }
 
       res.status(200).json({ message: 'Profile', user });
   } catch (err) {
-      console.error('Error fetching user profile:', err);
-      
-      // Handle invalid ObjectId format
-      if (err.name === 'CastError') {
-          return res.status(400).json({ message: 'Invalid user ID format' });
-      }
-      
+      console.error(err);
       res.status(500).json({ message: 'Server error' });
   }
 };
-
 const forgotPass = async(req, res) => {
   try {
     const { email } = req.body;
