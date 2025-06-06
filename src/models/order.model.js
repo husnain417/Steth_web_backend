@@ -1,87 +1,177 @@
+// models/order.model.js
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const orderSchema = new Schema({
-    user: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+const orderSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false // Allow guest orders
+  },
+  items: [{
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
     },
-    items: [{
-        product: {
-            type: Schema.Types.ObjectId,
-            ref: 'Product',
-            required: true
-        },
-        productName: String,
-        color: String,
-        size: String,
-        quantity: {
-            type: Number,
-            required: true,
-            min: [1, 'Quantity cannot be less than 1']
-        },
-        price: {
-            type: Number,
-            required: true
-        }
-    }],
-    shippingAddress: {
-        fullName: String,
-        addressLine1: String,
-        addressLine2: String,
-        city: String,
-        state: String,
-        postalCode: String,
-        country: String,
-        phoneNumber: String
+    productName: {
+      type: String,
+      required: true
     },
-    subtotal: {
-        type: Number,
-        required: true
+    color: {
+      type: String,
+      required: true
     },
-    discount: {
-        type: Number,
-        default: 0
+    size: {
+      type: String,
+      required: true
     },
-    discountCode: String,
-    pointsUsed: {
-        type: Number,
-        default: 0
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1
     },
-    pointsEarned: {
-        type: Number,
-        default: 0
-    },
-    total: {
-        type: Number,
-        required: true
-    },
-    paymentMethod: {
-        type: String,
-        enum: ['cash-on-delivery', 'bank-transfer'],
-        default: 'COD'
-    },
-    paymentReceipt: {
-        url: String,
-        public_id: String,
-        uploaded: {
-            type: Boolean,
-            default: false
-        }
-    },
-    status: {
-        type: String,
-        default: 'Pending',
-        enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled']
-    },
-    trackingNumber: String,
-    notes: String,
-    isFirstOrder: {
-        type: Boolean,
-        default: false
+    price: {
+      type: Number,
+      required: true,
+      min: 0
     }
-}, { timestamps: true });
+  }],
+  shippingAddress: {
+    fullName: {
+      type: String,
+      required: true
+    },
+    addressLine1: {
+      type: String,
+      required: true
+    },
+    addressLine2: {
+      type: String
+    },
+    city: {
+      type: String,
+      required: true
+    },
+    state: {
+      type: String,
+      required: true
+    },
+    postalCode: {
+      type: String,
+      required: true
+    },
+    country: {
+      type: String,
+      required: true
+    },
+    phoneNumber: {
+      type: String,
+      required: true
+    }
+  },
+  subtotal: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  discount: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0
+  },
+  discountCode: {
+    type: String,
+    default: ''
+  },
+  shippingCharges: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0
+  },
+  total: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  pointsUsed: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  pointsEarned: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  paymentMethod: {
+    type: String,
+    required: true,
+    enum: ['cash-on-delivery', 'bank-transfer', 'card']
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed'],
+    default: 'pending'
+  },
+  paymentReceipt: {
+    url: String,
+    public_id: String,
+    uploaded: {
+      type: Boolean,
+      default: false
+    }
+  },
+  orderStatus: {
+    type: String,
+    enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
+    default: 'pending'
+  },
+  isFirstOrder: {
+    type: Boolean,
+    default: false
+  },
+  trackingNumber: {
+    type: String
+  },
+  estimatedDelivery: {
+    type: Date
+  },
+  deliveredAt: {
+    type: Date
+  },
+  cancelledAt: {
+    type: Date
+  },
+  cancellationReason: {
+    type: String
+  }
+}, {
+  timestamps: true
+});
 
-const Order = mongoose.model('Order', orderSchema);
-module.exports = Order;
+// Index for efficient queries
+orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ orderStatus: 1 });
+orderSchema.index({ paymentStatus: 1 });
+
+// Virtual for formatted order ID
+orderSchema.virtual('formattedId').get(function() {
+  return `ORD-${this._id.toString().slice(-8).toUpperCase()}`;
+});
+
+// Pre-save middleware to validate total calculation
+orderSchema.pre('save', function(next) {
+  const calculatedTotal = this.subtotal - this.discount + this.shippingCharges;
+  
+  // Allow small floating point differences (1 cent tolerance)
+  if (Math.abs(calculatedTotal - this.total) > 0.01) {
+    const err = new Error(`Total amount mismatch. Expected: ${calculatedTotal}, Got: ${this.total}`);
+    return next(err);
+  }
+  
+  next();
+});
+
+module.exports = mongoose.model('Order', orderSchema);

@@ -136,76 +136,115 @@ exports.sendNewOrderEmailToAdmin = async (order, userEmail) => {
     }
   };
   
-  // Email for order confirmation to customer
-  exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
-    try {
-      // Format order items for better readability
-      const itemsList = order.items.map(item => `
-        <tr>
-          <td>${item.productName || 'Product'}</td>
-          <td>${item.color || 'N/A'}</td>
-          <td>${item.size || 'N/A'}</td>
-          <td>${item.quantity}</td>
-          <td>PKR ${item.price.toFixed(2)}</td>
-          <td>PKR ${order.total.toFixed(2)}</td>
-        </tr>
-      `).join('');
-  
-      const mailOptions = {
-        from: process.env.EMAIL_STETH,
-        to: userEmail,
-        subject: `Order Confirmed #${order._id}`,
-        html: `
-          <h2>Thank You for Your Order!</h2>
+// Email for order confirmation to customer
+exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
+  try {
+    // Format order items for better readability
+    const itemsList = order.items.map(item => `
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;">${item.productName || 'Product'}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${item.color || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${item.size || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">PKR ${item.price.toFixed(2)}</td>
+        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">PKR ${(item.price * item.quantity).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const mailOptions = {
+      from: process.env.EMAIL_STETH,
+      to: userEmail,
+      subject: `Order Confirmed #${order._id}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333;">Thank You for Your Order!</h2>
           <p>Hi ${order.shippingAddress.fullName},</p>
           <p>We have received your order and are processing it. Here's a summary of your purchase:</p>
           
-          <p><strong>Order ID:</strong> ${order._id}</p>
-          <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
-          <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p><strong>Order ID:</strong> ${order._id}</p>
+            <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+            <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>
+          </div>
           
-          <h3>Items Ordered:</h3>
-          <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
+          <h3 style="color: #333;">Items Ordered:</h3>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
             <tr style="background-color: #f2f2f2;">
-              <th>Product</th>
-              <th>Color</th>
-              <th>Size</th>
-              <th>Quantity</th>
-              <th>Unit Price</th>
-              <th>Total</th>
+              <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Product</th>
+              <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Color</th>
+              <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Size</th>
+              <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Quantity</th>
+              <th style="padding: 10px; border: 1px solid #ddd; text-align: right;">Unit Price</th>
+              <th style="padding: 10px; border: 1px solid #ddd; text-align: right;">Total</th>
             </tr>
             ${itemsList}
           </table>
           
-          <p><strong>Subtotal:</strong> PKR ${order.subtotal.toFixed(2)}</p>
-          <p><strong>Discount:</strong> PKR ${order.discount.toFixed(2)} ${order.discountCode ? `(${order.discountCode})` : ''}</p>
-          <p><strong>Points Used:</strong> ${order.pointsUsed}</p>
-          <p><strong>Points Earned:</strong> ${order.pointsEarned}</p>
-          <p><strong>Discounted Total:</strong> PKR ${order.total.toFixed(2)}</p>
+          <div style="border-top: 2px solid #333; padding-top: 15px; margin-top: 20px;">
+            <table style="width: 100%; margin-bottom: 10px;">
+              <tr>
+                <td style="text-align: right; padding: 5px 0;"><strong>Subtotal:</strong></td>
+                <td style="text-align: right; padding: 5px 0; width: 120px;"><strong>PKR ${order.subtotal.toFixed(2)}</strong></td>
+              </tr>
+              ${order.discount > 0 ? `
+                <tr>
+                  <td style="text-align: right; padding: 5px 0; color: #28a745;">Discount ${order.discountCode ? `(${order.discountCode})` : ''}:</td>
+                  <td style="text-align: right; padding: 5px 0; color: #28a745;">-PKR ${order.discount.toFixed(2)}</td>
+                </tr>
+              ` : ''}
+              ${order.pointsUsed > 0 ? `
+                <tr>
+                  <td style="text-align: right; padding: 5px 0; color: #28a745;">Points Used:</td>
+                  <td style="text-align: right; padding: 5px 0; color: #28a745;">-PKR ${order.pointsUsed.toFixed(2)}</td>
+                </tr>
+              ` : ''}
+              <tr>
+                <td style="text-align: right; padding: 5px 0;">Shipping:</td>
+                <td style="text-align: right; padding: 5px 0;">
+                  ${order.shippingCharges > 0 ? `PKR ${order.shippingCharges.toFixed(2)}` : 'Free'}
+                </td>
+              </tr>
+              <tr style="border-top: 1px solid #ddd;">
+                <td style="text-align: right; padding: 10px 5px 5px 0; font-size: 18px;"><strong>Final Total:</strong></td>
+                <td style="text-align: right; padding: 10px 5px 5px 0; font-size: 18px; color: #007bff;"><strong>PKR ${order.total.toFixed(2)}</strong></td>
+              </tr>
+            </table>
+          </div>
           
-          <h3>Shipping Address:</h3>
-          <p>
-            ${order.shippingAddress.fullName}<br>
-            ${order.shippingAddress.addressLine1}<br>
-            ${order.shippingAddress.addressLine2 ? order.shippingAddress.addressLine2 + '<br>' : ''}
-            ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}<br>
-            ${order.shippingAddress.country}<br>
-            Phone: ${order.shippingAddress.phoneNumber}
-          </p>
+          ${order.pointsEarned > 0 ? `
+            <div style="background-color: #e8f5e8; padding: 10px; border-radius: 5px; margin: 15px 0;">
+              <p style="margin: 0; color: #28a745;"><strong>🎉 You earned ${order.pointsEarned} reward points from this purchase!</strong></p>
+            </div>
+          ` : ''}
           
-          <p>We'll notify you when your order ships. You can also check your order status by logging into your account.</p>
+          <h3 style="color: #333;">Shipping Address:</h3>
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+            <p style="margin: 0;">
+              ${order.shippingAddress.fullName}<br>
+              ${order.shippingAddress.addressLine1}<br>
+              ${order.shippingAddress.addressLine2 ? order.shippingAddress.addressLine2 + '<br>' : ''}
+              ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}<br>
+              ${order.shippingAddress.country}<br>
+              Phone: ${order.shippingAddress.phoneNumber}
+            </p>
+          </div>
+          
+          <div style="margin: 30px 0; padding: 20px; background-color: #f0f8ff; border-radius: 5px;">
+            <p style="margin: 0;">We'll notify you when your order ships. You can also check your order status by logging into your account.</p>
+          </div>
           
           <p>Thank you for shopping with us!</p>
-          <p>The Steth Team</p>
-        `
-      };
-  
-      await transporter.sendMail(mailOptions);
-      console.log('Order confirmation email sent to customer');
-    } catch (error) {
-      console.error('Error sending order confirmation email to customer:', error);
-    }
-  };
+          <p style="color: #666;"><em>The Steth Team</em></p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent to customer');
+  } catch (error) {
+    console.error('Error sending order confirmation email to customer:', error);
+  }
+};
   
   // Email for order status update to customer
   exports.sendOrderStatusUpdateToCustomer = async (order, userEmail) => {
