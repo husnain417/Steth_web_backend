@@ -142,18 +142,25 @@ const loginUser = async (req, res) => {
 };
 
 const profileAccess = async (req, res) => {
-  const { id } = "68421e1deca16ba302078926";
+  // Hardcoded admin ID for testing
+  const id = "68421e1deca16ba302078926";
 
   try {
       const user = await User.findOne({ _id: id }).lean();
 
       if (!user) {
-          return res.status(400).json({ message: 'User not found' });
+          return res.status(404).json({ message: 'User not found' }); // Changed to 404
       }
 
       res.status(200).json({ message: 'Profile', user });
   } catch (err) {
-      console.error(err);
+      console.error('Error fetching user profile:', err);
+      
+      // Handle invalid ObjectId format
+      if (err.name === 'CastError') {
+          return res.status(400).json({ message: 'Invalid user ID format' });
+      }
+      
       res.status(500).json({ message: 'Server error' });
   }
 };

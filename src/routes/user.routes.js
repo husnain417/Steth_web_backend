@@ -13,15 +13,15 @@ router.post('/login', userController.loginUser);
 router.post('/google-auth', userController.googleAuthUser);
 
 // Authenticated user routes
-router.get('/profile', userController.profileAccess);
-router.post('/password-update', userController.changePass);
-router.put('/update-account', userController.updateAccount);
+router.get('/profile', auth, userController.profileAccess);
+router.post('/password-update', auth, userController.changePass);
+router.put('/update-account', auth, userController.updateAccount);
 
 // Route for updating account with profile picture
-router.put('/update-account-with-pic', upload.single('profilePicture'), userController.updateAccount);
+router.put('/update-account-with-pic', auth, upload.single('profilePicture'), userController.updateAccount);
 
 // Keep your existing profile picture upload route
-router.post('/upload-pic', upload.single('profilePicture'), userController.uploadPicture);
+router.post('/upload-pic', auth, upload.single('profilePicture'), userController.uploadPicture);
 
 router.post('/password-forgot', userController.forgotPass);
 router.post('/verify-otp', userController.verifyOtp);
