@@ -142,7 +142,7 @@ const loginUser = async (req, res) => {
 };
 
 const profileAccess = async (req, res) => {
-  const { id } = req.user;
+  const { id } = "68421e1deca16ba302078926";
 
   try {
       const user = await User.findOne({ _id: id }).lean();
