@@ -157,6 +157,24 @@ const profileAccess = async (req, res) => {
       res.status(500).json({ message: 'Server error' });
   }
 };
+
+const profileAccessAdmin = async (req, res) => {
+  const id = "68421e1deca16ba302078926";
+
+  try {
+      const user = await User.findOne({ _id: id }).lean();
+
+      if (!user) {
+          return res.status(400).json({ message: 'User not found' });
+      }
+
+      res.status(200).json({ message: 'Profile', user });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const forgotPass = async(req, res) => {
   try {
     const { email } = req.body;
@@ -309,7 +327,7 @@ const changePass = async (req, res) => {
 
 const uploadPicture = async (req, res) => {
   try {
-    const { id } = req.user;
+    const id = "68421e1deca16ba302078926";
     const user = await User.findById(id);
 
     if (!user) {
@@ -343,7 +361,7 @@ const uploadPicture = async (req, res) => {
 
 const updateAccount = async (req, res) => {
   try {
-    const { id } = req.user;
+    const id = "68421e1deca16ba302078926";
     const { username, currentPassword, newPassword } = req.body;
     
     const user = await User.findById(id);
@@ -506,5 +524,6 @@ module.exports = {
   updateAccount,
   resendOtp,
   googleAuthUser,
-  auth
+  auth,
+  profileAccessAdmin
 };
