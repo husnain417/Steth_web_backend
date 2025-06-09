@@ -4,7 +4,6 @@ const colorTileSchema = new mongoose.Schema({
     colorName: {
         type: String,
         required: true,
-        unique: true
     },
     imageUrl: {
         type: String,
