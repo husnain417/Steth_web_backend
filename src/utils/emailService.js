@@ -1,6 +1,7 @@
 // utils/emailService.js
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const path = require('path');
 
 
 const transporter = nodemailer.createTransport({
@@ -514,8 +515,8 @@ exports.sendWelcomeEmail = async (email) => {
       `,
       attachments: [{
         filename: 'welcome.jpeg',
-        path: 'src/images/welcome.jpeg',
-        cid: 'welcome-image' // Content ID for referencing in HTML
+        path: path.join(__dirname, '../images/welcome.jpeg'), // Adjust the relative path as needed
+        cid: 'welcome-image'
       }]
     };
 
