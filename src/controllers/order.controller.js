@@ -305,6 +305,7 @@ const orderController = {
       });
     }
   },
+  
 // Update order status (admin only)
 updateOrderStatus: async (req, res) => {
   try {
@@ -319,7 +320,7 @@ updateOrderStatus: async (req, res) => {
     }
 
     const order = await Order.findById(orderId)
-      .populate('user', 'email'); // Get user email for notification
+      .populate('user', 'email');
     
     if (!order) {
       return res.status(404).json({
@@ -334,8 +335,8 @@ updateOrderStatus: async (req, res) => {
     }
 
     // Only send notification if status actually changed
-    const statusChanged = order.status !== status;
-    order.status = status;
+    const statusChanged = order.orderStatus !== status; // Changed from order.status
+    order.orderStatus = status; // Changed from order.status
 
     const updatedOrder = await order.save();
 
