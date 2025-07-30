@@ -151,7 +151,7 @@ const orderController = {
         const finalOrderData = {
           items: processedItems,
           shippingAddress,
-          customerInfo,
+          customerEmail: customerInfo?.email || shippingAddress?.email || null,
           subtotal: Number(subtotal),
           shippingCharges: Number(shippingCharges), // ADD THIS LINE - Include shipping charges
           discount: Number(discount),
