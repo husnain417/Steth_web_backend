@@ -151,6 +151,7 @@ const orderController = {
         const finalOrderData = {
           items: processedItems,
           shippingAddress,
+          customerInfo,
           subtotal: Number(subtotal),
           shippingCharges: Number(shippingCharges), // ADD THIS LINE - Include shipping charges
           discount: Number(discount),
@@ -163,7 +164,6 @@ const orderController = {
           paymentMethod,
           isFirstOrder,
           paymentReceipt: receiptData,
-          customerEmail: customerInfo?.email || '' // Save customer email from customerInfo
         };
         
         // Add user reference if logged in
