@@ -13,6 +13,7 @@ const checkReceiptRequired = (req, res, next) => {
   
   // Order creation route with conditional file upload
 router.post('/create', auth, checkReceiptRequired, orderController.createOrder);
+router.post('/create-guest', checkReceiptRequired, orderController.createOrder);
 router.get('/my-orders', auth, orderController.getUserOrders);
 router.get('/details/:orderId', auth , orderController.getOrderById);
 //router.post('/cancel/:orderId', auth , orderController.cancelOrder);
