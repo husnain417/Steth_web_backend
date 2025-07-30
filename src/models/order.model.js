@@ -146,6 +146,10 @@ const orderSchema = new mongoose.Schema({
   },
   cancellationReason: {
     type: String
+  },
+  customerEmail: {
+    type: String,
+    required: true
   }
 }, {
   timestamps: true

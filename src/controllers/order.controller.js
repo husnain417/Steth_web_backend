@@ -162,7 +162,8 @@ const orderController = {
           pointsEarned,
           paymentMethod,
           isFirstOrder,
-          paymentReceipt: receiptData
+          paymentReceipt: receiptData,
+          customerEmail: customerInfo?.email || '' // Save customer email from customerInfo
         };
         
         // Add user reference if logged in
