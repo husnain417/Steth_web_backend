@@ -205,45 +205,65 @@ const orderController = {
         });
       }
     },
-  // Get all orders for admin
-  getAllOrders: async (req, res) => {
-    try {
-      // Pagination
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
-      const skip = (page - 1) * limit;
+// Get all orders for admin
+getAllOrders: async (req, res) => {
+  try {
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Filtering
+    const filter = {};
+    if (req.query.status) filter.status = req.query.status;
+    
+    // Count total documents for pagination
+    const totalOrders = await Order.countDocuments(filter);
+    
+    const orders = await Order.find(filter)
+      .populate('user', 'name email')
+      .populate('items.product', 'name images')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    // Process orders to determine email priority
+    const processedOrders = orders.map(order => {
+      const orderObj = order.toObject();
       
-      // Filtering
-      const filter = {};
-      if (req.query.status) filter.status = req.query.status;
+      // Priority: customerEmail > user.email > null
+      let finalEmail = null;
       
-      // Count total documents for pagination
-      const totalOrders = await Order.countDocuments(filter);
+      if (orderObj.customerEmail) {
+        finalEmail = orderObj.customerEmail;
+      } else if (orderObj.user && orderObj.user.email) {
+        finalEmail = orderObj.user.email;
+      }
+      // If both are null, finalEmail remains null
       
-      const orders = await Order.find(filter)
-        .populate('user', 'name email')
-        .populate('items.product', 'name images')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit);
+      // Add the final email to the order object
+      orderObj.email = finalEmail;
       
-      return res.status(200).json({
-        success: true,
-        count: orders.length,
-        total: totalOrders,
-        totalPages: Math.ceil(totalOrders / limit),
-        currentPage: page,
-        orders
-      });
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch orders',
-        error: error.message
-      });
-    }
-  },
+      return orderObj;
+    });
+    
+    return res.status(200).json({
+      success: true,
+      count: processedOrders.length,
+      total: totalOrders,
+      totalPages: Math.ceil(totalOrders / limit),
+      currentPage: page,
+      orders: processedOrders
+    });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch orders',
+      error: error.message
+    });
+  }
+},
   
   // Get user's orders
   getUserOrders: async (req, res) => {
