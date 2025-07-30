@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 // const { sendOtp } = require('../services/sendOtp');
 // const { reSendOtp } = require('../services/sendOtp');
+const mongoose = require('mongoose'); // Add this line
+
 const path = require('path');
 const fs = require('fs');
 const { uploadToCloudinary } = require('../utils/cloudinayUpload');
@@ -62,6 +64,11 @@ const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ message: 'Database connection unavailable' });
+    }
+
     if (!username || !email || !password) {
       return res.status(400).json({ message: 'Fill all fields' });
     }
@@ -74,25 +81,58 @@ const registerUser = async (req, res) => {
     }
 
     const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if (!isEmailValid) {
-        return res.status(400).json({ message: 'Enter a valid email format' });
-      }
+    if (!isEmailValid) {
+      return res.status(400).json({ message: 'Enter a valid email format' });
+    }
 
-    const userAlreadyExists = await User.findOne({ username });
+    // Add timeout to database queries
+    const checkExisting = await Promise.race([
+      Promise.all([
+        User.findOne({ username }),
+        User.findOne({ email })
+      ]),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 10000)
+      )
+    ]);
+
+    const [userAlreadyExists, mailAlreadyExists] = checkExisting;
 
     if (userAlreadyExists) {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
+    if (mailAlreadyExists) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({ username, email, password: hashedPassword });
-    await newUser.save();
-    //await emailVerification(email);
+    
+    await Promise.race([
+      newUser.save(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database save timeout')), 10000)
+      )
+    ]);
 
-    res.status(200).json({ message: 'User created successfully' });
+    res.status(201).json({ message: 'User created successfully' });
   } catch (err) {
-    console.log(err);
+    console.error('Registration error:', err);
+    
+    if (err.message.includes('timeout')) {
+      return res.status(503).json({ 
+        message: 'Database connection timeout. Please check your connection and try again.' 
+      });
+    }
+    
+    if (err.name === 'MongoTimeoutError' || err.name === 'MongooseError') {
+      return res.status(503).json({ 
+        message: 'Database connection issue. Please try again later.' 
+      });
+    }
+    
     res.status(500).json({ message: 'Server error' });
   }
 };
