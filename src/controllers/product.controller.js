@@ -1,7 +1,7 @@
 const Product = require('../models/product.model');
 const { catchAsync } = require('../utils/errorHandler');
 const fs = require('fs');
-const { uploadToCloudinary } = require('../utils/cloudinayUpload');
+const { uploadToImageKit } = require('../utils/imageKitUpload');
 const asyncHandler = require('express-async-handler');
 const path = require('path');
 
@@ -444,12 +444,12 @@ exports.deleteProduct = catchAsync(async (req, res) => {
   });
 });
 
-const getCloudinaryFolder = (productId, color = 'default') => {
-  return `products/${productId}/${color}`;
+const getImageKitFolder = (productId, color = 'default') => {
+  return `/products/${productId}/${color}`;
 };
 
 /**
- * Upload default product images to Cloudinary
+ * Upload default product images to ImageKit
  */
 exports.uploadDefaultImages = asyncHandler(async (req, res) => {
   const productId = req.params.id;
@@ -470,21 +470,22 @@ exports.uploadDefaultImages = asyncHandler(async (req, res) => {
     });
   }
   
-  // Upload each file to Cloudinary
-  const cloudinaryFolder = getCloudinaryFolder(productId);
-  const uploadPromises = req.files.map(file => 
-    uploadToCloudinary(file.path, cloudinaryFolder)
-  );
+  // Upload each file to ImageKit
+  const imagekitFolder = getImageKitFolder(productId);
+  const uploadPromises = req.files.map((file, index) => {
+    const fileName = `default_${Date.now()}_${index}`;
+    return uploadToImageKit(file.path, imagekitFolder, fileName);
+  });
   
   try {
-    const cloudinaryResults = await Promise.all(uploadPromises);
+    const imagekitResults = await Promise.all(uploadPromises);
     
-    // Create image objects from Cloudinary results
-    const newImages = cloudinaryResults.map(result => ({
-      url: result.secure_url,
+    // Create image objects from ImageKit results
+    const newImages = imagekitResults.map(result => ({
+      url: result.url,
       alt: product.name,
-      // Store public_id for future reference (e.g., deletion)
-      public_id: result.public_id
+      // Store fileId for future reference (e.g., deletion)
+      fileId: result.fileId
     }));
     
     // Add new images to product's defaultImages
@@ -498,14 +499,14 @@ exports.uploadDefaultImages = asyncHandler(async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error uploading images to cloud storage',
+      message: 'Error uploading images to ImageKit',
       error: error.message
     });
   }
 });
 
 /**
- * Upload color-specific product images to Cloudinary
+ * Upload color-specific product images to ImageKit
  */
 exports.uploadColorImages = asyncHandler(async (req, res) => {
   const { id: productId, color } = req.params;
@@ -535,22 +536,23 @@ exports.uploadColorImages = asyncHandler(async (req, res) => {
     });
   }
   
-  // Upload each file to Cloudinary
-  const cloudinaryFolder = getCloudinaryFolder(productId, color);
-  const uploadPromises = req.files.map(file => 
-    uploadToCloudinary(file.path, cloudinaryFolder)
-  );
+  // Upload each file to ImageKit
+  const imagekitFolder = getImageKitFolder(productId, color);
+  const uploadPromises = req.files.map((file, index) => {
+    const fileName = `${color}_${Date.now()}_${index}`;
+    return uploadToImageKit(file.path, imagekitFolder, fileName);
+  });
   
   try {
-    const cloudinaryResults = await Promise.all(uploadPromises);
+    const imagekitResults = await Promise.all(uploadPromises);
     
-    // Create image objects from Cloudinary results
-    const newImages = cloudinaryResults.map(result => ({
-      url: result.secure_url,
+    // Create image objects from ImageKit results
+    const newImages = imagekitResults.map(result => ({
+      url: result.url,
       alt: `${product.name} - ${color}`,
       isPrimary: false,
-      // Store public_id for future reference (e.g., deletion)
-      public_id: result.public_id
+      // Store fileId for future reference (e.g., deletion)
+      fileId: result.fileId
     }));
     
     // Check if we already have an entry for this color in colorImages
@@ -582,7 +584,7 @@ exports.uploadColorImages = asyncHandler(async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error uploading images to cloud storage',
+      message: 'Error uploading images to ImageKit',
       error: error.message
     });
   }

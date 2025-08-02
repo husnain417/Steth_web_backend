@@ -51,11 +51,11 @@ const productSchema = new Schema({
             default: 0
         }
     }],
-    // Color-specific images
+    // Default product images
     defaultImages: [{
         url: String,
         alt: String,
-        public_id: String // Add this field for Cloudinary asset tracking
+        fileId: String // ImageKit file ID for asset tracking and deletion
     }],
     
     // Color-specific images
@@ -68,7 +68,7 @@ const productSchema = new Schema({
                 type: Boolean,
                 default: false
             },
-            public_id: String // Add this field for Cloudinary asset tracking
+            fileId: String // ImageKit file ID for asset tracking and deletion
         }]
     }],
     // Total stock across all colors and sizes
