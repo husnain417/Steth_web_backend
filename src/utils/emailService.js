@@ -317,59 +317,65 @@ exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
   }
 };
   
-  // Email for order status update to customer
-  exports.sendOrderStatusUpdateToCustomer = async (order, userEmail) => {
-    try {
-      // Customize message based on status
-      let statusMessage = '';
-      let subject = `Order #${order._id} Status Update: ${order.status}`;
-      
-      switch(order.status) {
-        case 'Processing':
-          statusMessage = 'Your order is now being processed. We are preparing your items for shipment.';
-          break;
-        case 'Shipped':
-          statusMessage = `Your order has been shipped! ${order.trackingNumber ? `Your tracking number is: ${order.trackingNumber}` : 'You will receive tracking information shortly.'}`;
-          break;
-        case 'Delivered':
-          statusMessage = 'Your order has been delivered. We hope you enjoy your purchase!';
-          break;
-        case 'Cancelled':
-          statusMessage = 'Your order has been cancelled. If you have any questions, please contact our customer support.';
-          subject = `Order #${order._id} Cancelled`;
-          break;
-        default:
-          statusMessage = `Your order status has been updated to: ${order.status}`;
-      }
-  
-      const mailOptions = {
-        from: process.env.EMAIL_STETH,
-        to: userEmail,
-        subject: subject,
-        html: `
-          <h2>Order Status Update</h2>
-          <p>Hi ${order.shippingAddress.fullName},</p>
-          
-          <p>${statusMessage}</p>
-          
-          <p><strong>Order ID:</strong> ${order._id}</p>
-          <p><strong>New Status:</strong> ${order.status}</p>
-          <p><strong>Updated On:</strong> ${new Date().toLocaleString()}</p>
-          
-          <p>You can view your complete order details by logging into your account.</p>
-          
-          <p>If you have any questions about your order, please don't hesitate to contact us.</p>
-          
-          <p>Thank you for shopping with Steth!</p>
-        `
-      };
-
-      await transporter.sendMail(mailOptions);
-      console.log(`Order status update email sent to customer: ${order.status}`);
-    } catch (error) {
-      console.error('Error sending order status update email:', error);
+// Email for order status update to customer
+exports.sendOrderStatusUpdateToCustomer = async (order, userEmail) => {
+  try {
+    // Customize message based on status - FIXED: using orderStatus instead of status
+    let statusMessage = '';
+    let subject = `Order #${order._id} Status Update: ${order.orderStatus}`;
+    
+    switch(order.orderStatus) { // FIXED: Changed from order.status to order.orderStatus
+      case 'confirmed':
+        statusMessage = 'Your order has been confirmed! We are preparing your items for processing.';
+        break;
+      case 'processing':
+        statusMessage = 'Your order is now being processed. We are preparing your items for shipment.';
+        break;
+      case 'shipped':
+        statusMessage = `Your order has been shipped! ${order.trackingNumber ? `Your tracking number is: ${order.trackingNumber}` : 'You will receive tracking information shortly.'}`;
+        break;
+      case 'delivered':
+        statusMessage = 'Your order has been delivered. We hope you enjoy your purchase!';
+        break;
+      case 'cancelled':
+        statusMessage = 'Your order has been cancelled. If you have any questions, please contact our customer support.';
+        subject = `Order #${order._id} Cancelled`;
+        break;
+      case 'pending':
+        statusMessage = 'Your order is pending confirmation. We will update you once it has been processed.';
+        break;
+      default:
+        statusMessage = `Your order status has been updated to: ${order.orderStatus}`;
     }
-  };
+
+    const mailOptions = {
+      from: process.env.EMAIL_STETH,
+      to: userEmail,
+      subject: subject,
+      html: `
+        <h2>Order Status Update</h2>
+        <p>Hi ${order.shippingAddress.fullName},</p>
+        
+        <p>${statusMessage}</p>
+        
+        <p><strong>Order ID:</strong> ${order._id}</p>
+        <p><strong>New Status:</strong> ${order.orderStatus}</p>
+        <p><strong>Updated On:</strong> ${new Date().toLocaleString()}</p>
+        
+        <p>You can view your complete order details by logging into your account.</p>
+        
+        <p>If you have any questions about your order, please don't hesitate to contact us.</p>
+        
+        <p>Thank you for shopping with Steth!</p>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Order status update email sent to customer: ${order.orderStatus}`);
+  } catch (error) {
+    console.error('Error sending order status update email:', error);
+  }
+};
 
   // OTP Functions
 exports.sendOtp = async (user) => {
