@@ -361,14 +361,17 @@ updateOrderStatus: async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    // Send status update email if status changed
-    if (statusChanged && order.user && order.user.email) {
-      try {
-        await sendOrderStatusUpdateToCustomer(updatedOrder, order.user.email);
-      } catch (emailError) {
-        console.log('Status update email failed, but order was updated:', emailError);
+    if (statusChanged) {
+      const emailToSend = order.customerEmail || order.user?.email;
+    
+      if (emailToSend) {
+        try {
+          await sendOrderStatusUpdateToCustomer(updatedOrder, emailToSend);
+        } catch (emailError) {
+          console.log('Status update email failed, but order was updated:', emailError);
+        }
       }
-    }
+    }    
 
     return res.status(200).json({
       success: true,
