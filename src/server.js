@@ -60,7 +60,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "img-src": ["'self'", "data:", "http://localhost:5000", "http://localhost:3000", "res.cloudinary.com"]
+              "img-src": ["'self'", "data:", "http://localhost:5000", "http://localhost:3000", "ik.imagekit.io"]
     }
   },
   crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -121,8 +121,8 @@ app.use((error, req, res, next) => {
     });
   }
 
-  // Handle Cloudinary errors
-  if (error.message.includes('Cloudinary') || error.http_code) {
+      // Handle ImageKit errors
+    if (error.message.includes('ImageKit') || error.http_code) {
     return res.status(500).json({
       success: false,
       message: 'Error uploading images to cloud storage',

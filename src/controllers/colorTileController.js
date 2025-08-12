@@ -1,5 +1,5 @@
 const ColorTile = require('../models/ColorTile');
-const { cloudinary } = require('../config/cloudinary');
+const { imagekit } = require('../config/imageKit');
 const fs = require('fs').promises;
 
 // Helper function to clean up temporary files
@@ -47,9 +47,12 @@ exports.uploadColorTile = async (req, res) => {
             });
         }
 
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(file.path, {
+        // Upload to ImageKit
+        const result = await imagekit.upload({
+            file: require('fs').createReadStream(file.path),
+            fileName: file.originalname,
             folder: 'color-tiles',
+            useUniqueFileName: true
         });
 
         // Clean up temporary file
@@ -58,8 +61,8 @@ exports.uploadColorTile = async (req, res) => {
         // Create new color tile
         const colorTile = await ColorTile.create({
             colorName,
-            imageUrl: result.secure_url,
-            cloudinaryId: result.public_id
+            imageUrl: result.url,
+            imagekitId: result.fileId
         });
 
         res.status(200).json({
@@ -93,8 +96,8 @@ exports.deleteColorTile = async (req, res) => {
             });
         }
 
-        // Delete from Cloudinary
-        await cloudinary.uploader.destroy(colorTile.cloudinaryId);
+        // Delete from ImageKit
+        await imagekit.deleteFile(colorTile.imagekitId);
 
         // Delete from database
         await colorTile.deleteOne();

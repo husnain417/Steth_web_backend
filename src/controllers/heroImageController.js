@@ -1,5 +1,5 @@
 const HeroImage = require('../models/HeroImage');
-const { cloudinary } = require('../config/cloudinary');
+const { imagekit } = require('../config/imageKit');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -25,9 +25,12 @@ exports.uploadImage = async (req, res) => {
             });
         }
 
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(file.path, {
+        // Upload to ImageKit
+        const result = await imagekit.upload({
+            file: require('fs').createReadStream(file.path),
+            fileName: file.originalname,
             folder: `hero-images/${pageType}`,
+            useUniqueFileName: true
         });
 
         // Clean up temporary file
@@ -37,8 +40,8 @@ exports.uploadImage = async (req, res) => {
         const heroImage = await HeroImage.findOneAndUpdate(
             { pageType, viewType },
             {
-                imageUrl: result.secure_url,
-                cloudinaryId: result.public_id
+                imageUrl: result.url,
+                imagekitId: result.fileId
             },
             { upsert: true, new: true }
         );
@@ -75,13 +78,19 @@ exports.uploadPageImages = async (req, res) => {
         }
 
         // Upload web image
-        const webResult = await cloudinary.uploader.upload(files.webImage[0].path, {
+        const webResult = await imagekit.upload({
+            file: require('fs').createReadStream(files.webImage[0].path),
+            fileName: files.webImage[0].originalname,
             folder: `hero-images/${pageType}`,
+            useUniqueFileName: true
         });
 
         // Upload mobile image
-        const mobileResult = await cloudinary.uploader.upload(files.mobileImage[0].path, {
+        const mobileResult = await imagekit.upload({
+            file: require('fs').createReadStream(files.mobileImage[0].path),
+            fileName: files.mobileImage[0].originalname,
             folder: `hero-images/${pageType}`,
+            useUniqueFileName: true
         });
 
         // Clean up temporary files
@@ -95,16 +104,16 @@ exports.uploadPageImages = async (req, res) => {
             HeroImage.findOneAndUpdate(
                 { pageType, viewType: 'web' },
                 {
-                    imageUrl: webResult.secure_url,
-                    cloudinaryId: webResult.public_id
+                    imageUrl: webResult.url,
+                    imagekitId: webResult.fileId
                 },
                 { upsert: true, new: true }
             ),
             HeroImage.findOneAndUpdate(
                 { pageType, viewType: 'mobile' },
                 {
-                    imageUrl: mobileResult.secure_url,
-                    cloudinaryId: mobileResult.public_id
+                    imageUrl: mobileResult.url,
+                    imagekitId: mobileResult.fileId
                 },
                 { upsert: true, new: true }
             )
@@ -243,8 +252,8 @@ exports.deleteImage = async (req, res) => {
             });
         }
 
-        // Delete from Cloudinary
-        await cloudinary.uploader.destroy(image.cloudinaryId);
+        // Delete from ImageKit
+        await imagekit.deleteFile(image.imagekitId);
 
         // Delete from database
         await image.deleteOne();

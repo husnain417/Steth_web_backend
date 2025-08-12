@@ -20,11 +20,11 @@ const studentVerificationSchema = new Schema({
         required: true
     },
     proofDocument: {
-        type: String, // Cloudinary URL to uploaded document
+        type: String, // ImageKit URL to uploaded document
         required: true
     },
-    cloudinaryPublicId: {
-        type: String, // Store Cloudinary public_id for future reference
+    imagekitFileId: {
+        type: String, // Store ImageKit file ID for future reference
         required: true
     },
     status: {

@@ -1,31 +1,39 @@
 const { imagekit } = require('../config/imageKit');
 const fs = require('fs');
+const path = require('path');
 
 /**
  * Upload file to ImageKit
  * @param {string} filePath - Path to the local file
  * @param {string} folder - ImageKit folder path
- * @param {string} fileName - Name for the uploaded file
  * @returns {Promise} - ImageKit upload response
  */
-const uploadToImageKit = async (filePath, folder, fileName) => {
+const uploadToImageKit = async (filePath, folder) => {
   try {
-    // Read the file
-    const fileBuffer = fs.readFileSync(filePath);
-    
-    // Generate a unique filename if not provided
-    const uniqueFileName = fileName || `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const fileName = path.basename(filePath);
+    const folderPath = folder ? `${folder}/${fileName}` : fileName;
     
     const result = await imagekit.upload({
-      file: fileBuffer,
-      fileName: uniqueFileName,
+      file: fs.createReadStream(filePath),
+      fileName: fileName,
       folder: folder,
       useUniqueFileName: true
     });
     
     // Delete the local file after upload
     fs.unlinkSync(filePath);
-    return result;
+    
+    // Return result in similar format to Cloudinary for compatibility
+    return {
+      secure_url: result.url,
+      public_id: result.fileId,
+      url: result.url,
+      fileId: result.fileId,
+      name: result.name,
+      size: result.size,
+      height: result.height,
+      width: result.width
+    };
   } catch (error) {
     // Delete the local file if upload fails
     if (fs.existsSync(filePath)) {

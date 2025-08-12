@@ -8,7 +8,7 @@ const mongoose = require('mongoose'); // Add this line
 
 const path = require('path');
 const fs = require('fs');
-const { uploadToCloudinary } = require('../utils/cloudinayUpload');
+const { uploadToImageKit } = require('../utils/imageKitUpload');
 const { sendOtp,reSendOtp } = require('../utils/emailService');
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -379,13 +379,13 @@ const uploadPicture = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Use the cloudinary service to upload the image
-    const result = await uploadToCloudinary(
+    // Use the imagekit service to upload the image
+    const result = await uploadToImageKit(
       file.path, 
       `user/${user._id}`
     );
 
-    // Update user profile with new Cloudinary URL
+    // Update user profile with new ImageKit URL
     user.profilePicUrl = result.secure_url;
     await user.save();
 
@@ -448,7 +448,7 @@ const updateAccount = async (req, res) => {
     // Handle profile picture update if there's a file
     if (req.file) {
       try {
-        const result = await uploadToCloudinary(
+        const result = await uploadToImageKit(
           req.file.path, 
           `user/${user._id}`
         );

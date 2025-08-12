@@ -2,7 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Create a temporary storage directory for files before uploading to Cloudinary
+// Create a temporary storage directory for files before uploading to ImageKit
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const tempDir = path.join(__dirname, '..', 'temp');

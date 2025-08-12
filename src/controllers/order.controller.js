@@ -2,7 +2,7 @@ const Order = require('../models/order.model');
 const User = require('../models/user.model');
 const Product = require('../models/product.model');
 const StudentVerification = require('../models/student.model');
-const { uploadToCloudinary } = require('../utils/cloudinayUpload');
+const { uploadToImageKit } = require('../utils/imageKitUpload');
 
 const { 
   sendVerificationRequestEmail, 
@@ -136,9 +136,9 @@ const orderController = {
             });
           }
           
-          // Upload receipt to Cloudinary
-          const cloudinaryFolder = `order-payment/${userId || 'guest'}`;
-          const result = await uploadToCloudinary(req.file.path, cloudinaryFolder);
+          // Upload receipt to ImageKit
+          const imagekitFolder = `order-payment/${userId || 'guest'}`;
+          const result = await uploadToImageKit(req.file.path, imagekitFolder);
           
           receiptData = {
             url: result.secure_url,

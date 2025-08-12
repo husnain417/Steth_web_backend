@@ -1,8 +1,8 @@
 // studentVerification.controller.js
 const StudentVerification = require('../models/student.model');
 const User = require('../models/user.model');
-const { cloudinary } = require('../config/cloudinary');
-const { uploadToCloudinary } = require('../utils/cloudinayUpload');
+const { imagekit } = require('../config/imageKit');
+const { uploadToImageKit } = require('../utils/imageKitUpload');
 const { sendVerificationRequestEmail, sendVerificationResultEmail } = require('../utils/emailService');
 
 exports.submitVerification = async (req, res) => {
@@ -34,17 +34,17 @@ exports.submitVerification = async (req, res) => {
       });
     }
 
-    // Upload to Cloudinary
-    const cloudinaryFolder = `student-verification/${userId}`;
-    const result = await uploadToCloudinary(req.file.path, cloudinaryFolder);
+    // Upload to ImageKit
+    const imagekitFolder = `student-verification/${userId}`;
+    const result = await uploadToImageKit(req.file.path, imagekitFolder);
 
     const newVerification = new StudentVerification({
       user: userId,
       name,
       studentId,
       institutionName,
-      proofDocument: result.secure_url,
-      cloudinaryPublicId: result.public_id
+      proofDocument: result.url,
+      imagekitFileId: result.fileId
     });
 
     await User.findByIdAndUpdate(userId, {
