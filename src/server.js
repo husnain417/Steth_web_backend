@@ -9,6 +9,7 @@ const fs = require('fs');
 const multer = require('multer'); // Add this import
 require('dotenv').config();
 
+const testEmailRoutes = require('./routes/testEmail.routes');
 const productRoutes = require('./routes/product.routes');
 const userRoutes = require('./routes/user.routes');
 const studentVerificationRoutes = require('./routes/studentVerification.routes');
@@ -86,6 +87,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/hero-images', heroImageRoutes);
 app.use('/api/color-tiles', colorTileRoutes);
 app.use('/api/subscribers', subscriberRoutes);
+app.use('/api/test-email', testEmailRoutes);
 
 // Enhanced error handling middleware for file uploads
 app.use((error, req, res, next) => {
