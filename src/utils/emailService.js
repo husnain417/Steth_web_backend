@@ -1,30 +1,51 @@
 // utils/emailService.js
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 const crypto = require('crypto');
 const path = require('path');
 
-// UPDATED: Using Brevo instead of Gmail
-const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_LOGIN,      // Your SMTP login
-    pass: process.env.BREVO_API_KEY     // Your SMTP key
-  }
-});
+// Brevo API Configuration
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
-// Using verified Gmail address as sender
-// Make sure to replace ALL "from" addresses with this verified email
+console.log('📧 Email Service Initialized with Brevo API');
+console.log('API Key exists:', !!BREVO_API_KEY);
+
+// Helper function to send email via Brevo API
+const sendEmailViaBrevoAPI = async (emailData) => {
+  try {
+    console.log('📧 Sending email via Brevo API to:', emailData.to[0].email);
+    const response = await axios.post(BREVO_API_URL, emailData, {
+      headers: {
+        'accept': 'application/json',
+        'api-key': BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      timeout: 30000 // 30 second timeout
+    });
+    console.log('✅ Email sent successfully via Brevo API');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Brevo API Error:', error.response?.data || error.message);
+    throw error;
+  }
+};
 
 // Email for new verification request to admin
 exports.sendVerificationRequestEmail = async (verification, studentEmail) => {
   try {
-    const mailOptions = {
-      from: '"Steth" <stethhelp@gmail.com>',  // UPDATED - Using verified sender
-      to: process.env.EMAIL_ADMIN,
+    const emailData = {
+      sender: {
+        name: "Steth",
+        email: "stethhelp@gmail.com"
+      },
+      to: [
+        {
+          email: process.env.EMAIL_ADMIN,
+          name: "Admin"
+        }
+      ],
       subject: 'New Student Verification Request',
-      html: `
+      htmlContent: `
         <h2>New Student Verification Request</h2>
         <p><strong>Student Name:</strong> ${verification.name}</p>
         <p><strong>Institution:</strong> ${verification.institutionName}</p>
@@ -34,7 +55,7 @@ exports.sendVerificationRequestEmail = async (verification, studentEmail) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    await sendEmailViaBrevoAPI(emailData);
     console.log('Verification request email sent to admin');
   } catch (error) {
     console.error('Error sending verification request email:', error);
@@ -62,14 +83,21 @@ exports.sendVerificationResultEmail = async (verification, studentEmail, isAppro
         <p>You may submit a new verification request with updated information if you wish.</p>
       `;
 
-    const mailOptions = {
-      from: '"Steth" <9bb143001@smtp-brevo.com>',  // UPDATED
-      to: studentEmail,
+    const emailData = {
+      sender: {
+        name: "Steth",
+        email: "stethhelp@gmail.com"
+      },
+      to: [
+        {
+          email: studentEmail
+        }
+      ],
       subject: subject,
-      html: message
+      htmlContent: message
     };
 
-    await transporter.sendMail(mailOptions);
+    await sendEmailViaBrevoAPI(emailData);
     console.log('Verification result email sent to student');
   } catch (error) {
     console.error('Error sending verification result email:', error);
@@ -79,7 +107,6 @@ exports.sendVerificationResultEmail = async (verification, studentEmail, isAppro
 // Email for new order notification to admin
 exports.sendNewOrderEmailToAdmin = async (order, userEmail) => {
   try {
-    // Format order items for better readability
     const itemsList = order.items.map(item => `
       <tr>
         <td style="padding: 8px; border: 1px solid #ddd;">${item.productName || 'Product'}</td>
@@ -91,11 +118,19 @@ exports.sendNewOrderEmailToAdmin = async (order, userEmail) => {
       </tr>
     `).join('');
 
-    const mailOptions = {
-      from: '"Steth Orders" <9bb143001@smtp-brevo.com>',  // UPDATED
-      to: process.env.EMAIL_ADMIN,
+    const emailData = {
+      sender: {
+        name: "Steth Orders",
+        email: "stethhelp@gmail.com"
+      },
+      to: [
+        {
+          email: process.env.EMAIL_ADMIN,
+          name: "Admin"
+        }
+      ],
       subject: `🔔 New Order #${order._id}`,
-      html: `
+      htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
           <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
             <h2 style="color: #dc3545; margin-bottom: 20px; border-bottom: 3px solid #dc3545; padding-bottom: 10px;">🚨 New Order Received</h2>
@@ -205,18 +240,14 @@ exports.sendNewOrderEmailToAdmin = async (order, userEmail) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    await sendEmailViaBrevoAPI(emailData);
     console.log('New order email sent to admin');
   } catch (error) {
     console.error('Error sending order email to admin:', error);
   }
 };
 
-// Continue with rest of functions... (character limit, showing pattern)
-// Update ALL other email functions the same way:
-// Change: from: process.env.EMAIL_STETH
-// To: from: '"Steth" <9bb143001@smtp-brevo.com>'
-
+// Email for order confirmation to customer
 exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
   try {
     const itemsList = order.items.map(item => `
@@ -230,11 +261,18 @@ exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
       </tr>
     `).join('');
 
-    const mailOptions = {
-      from: '"Steth" <9bb143001@smtp-brevo.com>',  // UPDATED
-      to: userEmail,
+    const emailData = {
+      sender: {
+        name: "Steth",
+        email: "stethhelp@gmail.com"
+      },
+      to: [
+        {
+          email: userEmail
+        }
+      ],
       subject: `Order Confirmed #${order._id}`,
-      html: `
+      htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #333;">Thank You for Your Order!</h2>
           <p>Hi ${order.shippingAddress.fullName},</p>
@@ -318,11 +356,341 @@ exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    await sendEmailViaBrevoAPI(emailData);
     console.log('Order confirmation email sent to customer');
   } catch (error) {
     console.error('Error sending order confirmation email to customer:', error);
   }
 };
 
-// ... Continue updating ALL remaining functions with the same from address pattern
+// Email for order status update to customer
+exports.sendOrderStatusUpdateToCustomer = async (order, userEmail) => {
+  try {
+    let statusMessage = '';
+    let subject = `Order #${order._id} Status Update: ${order.orderStatus}`;
+    
+    switch(order.orderStatus) {
+      case 'confirmed':
+        statusMessage = 'Your order has been confirmed! We are preparing your items for processing.';
+        break;
+      case 'processing':
+        statusMessage = 'Your order is now being processed. We are preparing your items for shipment.';
+        break;
+      case 'shipped':
+        statusMessage = `Your order has been shipped! ${order.trackingNumber ? `Your tracking number is: ${order.trackingNumber}` : 'You will receive tracking information shortly.'}`;
+        break;
+      case 'delivered':
+        statusMessage = 'Your order has been delivered. We hope you enjoy your purchase!';
+        break;
+      case 'cancelled':
+        statusMessage = 'Your order has been cancelled. If you have any questions, please contact our customer support.';
+        subject = `Order #${order._id} Cancelled`;
+        break;
+      case 'pending':
+        statusMessage = 'Your order is pending confirmation. We will update you once it has been processed.';
+        break;
+      default:
+        statusMessage = `Your order status has been updated to: ${order.orderStatus}`;
+    }
+
+    const emailData = {
+      sender: {
+        name: "Steth",
+        email: "stethhelp@gmail.com"
+      },
+      to: [
+        {
+          email: userEmail
+        }
+      ],
+      subject: subject,
+      htmlContent: `
+        <h2>Order Status Update</h2>
+        <p>Hi ${order.shippingAddress.fullName},</p>
+        
+        <p>${statusMessage}</p>
+        
+        <p><strong>Order ID:</strong> ${order._id}</p>
+        <p><strong>New Status:</strong> ${order.orderStatus}</p>
+        <p><strong>Updated On:</strong> ${new Date().toLocaleString()}</p>
+        
+        <p>You can view your complete order details by logging into your account.</p>
+        
+        <p>If you have any questions about your order, please don't hesitate to contact us.</p>
+        
+        <p>Thank you for shopping with Steth!</p>
+      `
+    };
+
+    await sendEmailViaBrevoAPI(emailData);
+    console.log(`Order status update email sent to customer: ${order.orderStatus}`);
+  } catch (error) {
+    console.error('Error sending order status update email:', error);
+  }
+};
+
+// OTP Functions
+exports.sendOtp = async (user) => {
+  try {
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const time = 2;
+    user.otp = otp;
+    user.otpExpires = Date.now() + time * 60 * 1000;  
+    await user.save();
+
+    const emailData = {
+      sender: {
+        name: "Steth",
+        email: "stethhelp@gmail.com"
+      },
+      to: [
+        {
+          email: user.email
+        }
+      ],
+      subject: 'Your OTP Code',
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Your OTP Code</h2>
+          <p>Your verification code is:</p>
+          <div style="background: #f4f4f4; padding: 10px; margin: 20px 0; 
+              font-size: 24px; letter-spacing: 2px; text-align: center;">
+            <strong>${otp}</strong>
+          </div>
+          <p>This code will expire in ${time} minute${time > 1 ? 's' : ''}.</p>
+          <p>If you didn't request this code, please ignore this email.</p>
+        </div>
+      `
+    };
+
+    await sendEmailViaBrevoAPI(emailData);
+    console.log(`OTP sent to ${user.email}`);
+  } catch (err) {
+    console.error('Error sending OTP:', err);
+    throw err;
+  }
+};
+
+exports.reSendOtp = async (user) => {
+  try {
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const time = 5;
+    user.otp = otp;
+    user.otpExpires = Date.now() + time * 60 * 1000;  
+    await user.save();
+
+    const emailData = {
+      sender: {
+        name: "Steth",
+        email: "stethhelp@gmail.com"
+      },
+      to: [
+        {
+          email: user.email
+        }
+      ],
+      subject: 'Your New OTP Code',
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">New OTP Code</h2>
+          <p>Your new verification code is:</p>
+          <div style="background: #f4f4f4; padding: 10px; margin: 20px 0; 
+              font-size: 24px; letter-spacing: 2px; text-align: center;">
+            <strong>${otp}</strong>
+          </div>
+          <p>This code will expire in ${time} minute${time > 1 ? 's' : ''}.</p>
+          <p>If you didn't request this code, please ignore this email.</p>
+        </div>
+      `
+    };
+
+    await sendEmailViaBrevoAPI(emailData);
+    console.log(`New OTP sent to ${user.email}`);
+  } catch (err) {
+    console.error('Error resending OTP:', err);
+    throw err;
+  }
+};
+
+  // Contact form email function
+  exports.sendContactFormEmail = async (name, email, message) => {
+    try {
+      // Email to admin with contact form details
+      const adminEmailData = {
+        sender: {
+          name: "Steth",
+          email: "stethhelp@gmail.com"
+        },
+        to: [
+          {
+            email: process.env.EMAIL_ADMIN,
+            name: "Admin"
+          }
+        ],
+        subject: 'New Contact Form Submission',
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">New Contact Form Submission</h2>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Message:</strong></p>
+            <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #333;">
+              ${message.replace(/\n/g, '<br>')}
+            </div>
+            <p style="margin-top: 20px; color: #666;">Submitted on: ${new Date().toLocaleString()}</p>
+          </div>
+        `
+      };
+
+      // Auto-response to the user
+      const userEmailData = {
+        sender: {
+          name: "Steth",
+          email: "stethhelp@gmail.com"
+        },
+        to: [
+          {
+            email: email,
+            name: name
+          }
+        ],
+        subject: 'Thank you for contacting us',
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Thank You for Your Message</h2>
+            <p>Dear ${name},</p>
+            <p>We have received your message and will get back to you as soon as possible. 
+               For your records, here's a copy of your message:</p>
+            
+            <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #333; margin: 20px 0;">
+              ${message.replace(/\n/g, '<br>')}
+            </div>
+            
+            <p>If you have any additional questions or comments, please don't hesitate to contact us again.</p>
+            <p>Best regards,<br>The Steth Team</p>
+          </div>
+        `
+      };
+
+      // Send both emails
+      await sendEmailViaBrevoAPI(adminEmailData);
+      await sendEmailViaBrevoAPI(userEmailData);
+      
+      console.log(`Contact form submission from ${email} processed`);
+    } catch (error) {
+      console.error('Error sending contact form emails:', error);
+      throw error; // Re-throw to handle in the controller
+    }
+  };
+
+// Welcome email with image for new subscribers
+exports.sendWelcomeEmail = async (email) => {
+  try {
+    const fs = require('fs');
+    const imagePath = path.join(__dirname, '../images/welcome.jpeg');
+    
+    // Read image file and convert to base64 data URI for inline display
+    let imageDataURI = null;
+    let attachment = null;
+    
+    if (fs.existsSync(imagePath)) {
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString('base64');
+      
+      // Create data URI for inline display
+      imageDataURI = `data:image/jpeg;base64,${base64Image}`;
+      
+      // Also create attachment
+      attachment = [{
+        name: 'welcome.jpeg',
+        content: base64Image
+      }];
+    }
+
+    const emailData = {
+      sender: {
+        name: "Steth",
+        email: "stethhelp@gmail.com"
+      },
+      to: [
+        {
+          email: email
+        }
+      ],
+      subject: 'Welcome to Our Newsletter!',
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Welcome to Our Newsletter!</h2>
+          <p>Thank you for subscribing to our newsletter. We're excited to have you join our community!</p>
+          ${imageDataURI ? `<img src="${imageDataURI}" alt="Welcome" style="max-width: 100%; height: auto; margin: 20px 0;">` : ''}
+          <p>You'll be the first to know about our latest updates, news, and special offers.</p>
+          <p>Best regards,<br>The Steth Team</p>
+        </div>
+      `,
+      ...(attachment && { attachment: attachment })
+    };
+
+    await sendEmailViaBrevoAPI(emailData);
+    console.log(`Welcome email sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    throw error;
+  }
+};
+
+// Send bulk email to all subscribers
+exports.sendBulkEmail = async (subscribers, subject, message, images = []) => {
+  try {
+    const emailPromises = subscribers.map(subscriber => {
+      // Convert image buffers to base64 for Brevo API
+      const attachments = images.map((image, index) => ({
+        name: image.originalname || `image_${index + 1}.jpg`,
+        content: image.buffer.toString('base64')
+      }));
+
+      // Create image data URIs for inline display (alternative to attachments)
+      const imageDataURIs = images.map((image, index) => {
+        const base64 = image.buffer.toString('base64');
+        const mimeType = image.mimetype || 'image/jpeg';
+        return `data:${mimeType};base64,${base64}`;
+      });
+
+      const emailData = {
+        sender: {
+          name: "Steth",
+          email: "stethhelp@gmail.com"
+        },
+        to: [
+          {
+            email: subscriber.email
+          }
+        ],
+        subject: subject,
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">${subject}</h2>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+            ${imageDataURIs.map((dataURI, index) => `
+              <img src="${dataURI}" alt="Image ${index + 1}" style="max-width: 100%; height: auto; margin: 20px 0;">
+            `).join('')}
+            <p>Best regards,<br>The Steth Team</p>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+              <p style="color: #666; font-size: 12px;">
+                You're receiving this email because you subscribed to our newsletter.
+              </p>
+            </div>
+          </div>
+        `,
+        ...(attachments.length > 0 && { attachment: attachments })
+      };
+      
+      return sendEmailViaBrevoAPI(emailData);
+    });
+
+    await Promise.all(emailPromises);
+    console.log(`Bulk email sent to ${subscribers.length} subscribers with ${images.length} images`);
+  } catch (error) {
+    console.error('Error sending bulk email:', error);
+    throw error;
+  }
+};
