@@ -129,7 +129,7 @@ exports.sendNewOrderEmailToAdmin = async (order, userEmail) => {
           name: "Admin"
         }
       ],
-      subject: `🔔 New Order #${order._id}`,
+      subject: `🔔 New Order #${order.orderId || order._id}`,
       htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
           <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -137,7 +137,7 @@ exports.sendNewOrderEmailToAdmin = async (order, userEmail) => {
             
             <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
               <h3 style="margin: 0 0 10px 0; color: #856404;">Order Details</h3>
-              <p style="margin: 5px 0;"><strong>Order ID:</strong> ${order._id}</p>
+              <p style="margin: 5px 0;"><strong>Order ID:</strong> ${order.orderId || order._id}</p>
               <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
               <p style="margin: 5px 0;"><strong>Payment Method:</strong> <span style="background-color: ${order.paymentMethod === 'cash-on-delivery' ? '#d4edda' : '#cce5ff'}; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${order.paymentMethod.toUpperCase()}</span></p>
               ${order.isFirstOrder ? '<p style="margin: 5px 0; color: #28a745;"><strong>🎉 FIRST ORDER - NEW CUSTOMER!</strong></p>' : ''}
@@ -271,7 +271,7 @@ exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
           email: userEmail
         }
       ],
-      subject: `Order Confirmed #${order._id}`,
+      subject: `Order Confirmed #${order.orderId || order._id}`,
       htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #333;">Thank You for Your Order!</h2>
@@ -279,7 +279,7 @@ exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
           <p>We have received your order and are processing it. Here's a summary of your purchase:</p>
           
           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p><strong>Order ID:</strong> ${order._id}</p>
+            <p><strong>Order ID:</strong> ${order.orderId || order._id}</p>
             <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
             <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>
           </div>
@@ -367,26 +367,26 @@ exports.sendOrderConfirmationToCustomer = async (order, userEmail) => {
 exports.sendOrderStatusUpdateToCustomer = async (order, userEmail) => {
   try {
     let statusMessage = '';
-    let subject = `Order #${order._id} Status Update: ${order.orderStatus}`;
+    let subject = `Order #${order.orderId || order._id} Status Update: ${order.orderStatus}`;
     
     switch(order.orderStatus) {
-      case 'confirmed':
-        statusMessage = 'Your order has been confirmed! We are preparing your items for processing.';
+      case 'Confirmed':
+        statusMessage = 'Your order has been confirmed! We are preparing your items for Processing.';
         break;
-      case 'processing':
+      case 'Processing':
         statusMessage = 'Your order is now being processed. We are preparing your items for shipment.';
         break;
-      case 'shipped':
+      case 'Shipped':
         statusMessage = `Your order has been shipped! ${order.trackingNumber ? `Your tracking number is: ${order.trackingNumber}` : 'You will receive tracking information shortly.'}`;
         break;
-      case 'delivered':
+      case 'Delivered':
         statusMessage = 'Your order has been delivered. We hope you enjoy your purchase!';
         break;
-      case 'cancelled':
+      case 'Cancelled':
         statusMessage = 'Your order has been cancelled. If you have any questions, please contact our customer support.';
-        subject = `Order #${order._id} Cancelled`;
+        subject = `Order #${order.orderId || order._id} Cancelled`;
         break;
-      case 'pending':
+      case 'Pending':
         statusMessage = 'Your order is pending confirmation. We will update you once it has been processed.';
         break;
       default:
@@ -410,7 +410,7 @@ exports.sendOrderStatusUpdateToCustomer = async (order, userEmail) => {
         
         <p>${statusMessage}</p>
         
-        <p><strong>Order ID:</strong> ${order._id}</p>
+        <p><strong>Order ID:</strong> ${order.orderId || order._id}</p>
         <p><strong>New Status:</strong> ${order.orderStatus}</p>
         <p><strong>Updated On:</strong> ${new Date().toLocaleString()}</p>
         

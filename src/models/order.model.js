@@ -2,6 +2,11 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
+  orderId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -54,15 +59,15 @@ const orderSchema = new mongoose.Schema({
     },
     state: {
       type: String,
-      required: true
+      default: 'N/A'
     },
     postalCode: {
       type: String,
-      required: true
+      default: '00000'
     },
     country: {
       type: String,
-      required: true
+      default: 'Pakistan'
     },
     phoneNumber: {
       type: String,
@@ -125,8 +130,8 @@ const orderSchema = new mongoose.Schema({
   },
   orderStatus: {
     type: String,
-    enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
-    default: 'pending'
+    enum: ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
+    default: 'Pending'
   },
   isFirstOrder: {
     type: Boolean,

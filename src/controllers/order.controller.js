@@ -147,8 +147,25 @@ const orderController = {
           };
         }
   
+        // Generate smart order ID: YYYYMMDD-xxx
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const dateStr = `${year}${month}${day}`;
+        
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+        const todayOrderCount = await Order.countDocuments({
+          createdAt: { $gte: startOfDay, $lt: endOfDay }
+        });
+        
+        const orderNumber = String(todayOrderCount + 1).padStart(3, '0');
+        const orderId = `${dateStr}-${orderNumber}`;
+
         // Build order object with all required fields
         const finalOrderData = {
+          orderId,
           items: processedItems,
           shippingAddress,
           customerEmail: customerInfo?.email || shippingAddress?.email || null,
